@@ -1,32 +1,34 @@
 buildscript {
     ext {
-        springBootVersion = '2.0.1.RELEASE'
+        springBootVersion = '2.0.7.RELEASE'
     }
     repositories {
         mavenCentral()
+        gradlePluginPortal()
     }
     dependencies {
-        classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+        classpath "org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}"
+        classpath 'com.bmuschko:gradle-docker-plugin:4.1.0'
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'org.springframework.boot'
 apply plugin: 'io.spring.dependency-management'
+apply plugin: 'com.bmuschko.docker-spring-boot-application'
 
 group = 'com.mshatunov.pool.infra'
-version = '0.0.1-SNAPSHOT'
+version = '0.0.2'
 sourceCompatibility = 1.8
+targetCompatibility = 1.8
 
 repositories {
     mavenCentral()
-    maven { url "https://repo.spring.io/snapshot" }
-    maven { url "https://repo.spring.io/milestone" }
+    gradlePluginPortal()
 }
 
-
 ext {
-    springCloudVersion = 'Finchley.BUILD-SNAPSHOT'
+    springCloudVersion = 'Finchley.SR2'
 }
 
 dependencies {
@@ -38,4 +40,20 @@ dependencyManagement {
     imports {
         mavenBom "org.springframework.cloud:spring-cloud-dependencies:${springCloudVersion}"
     }
+}
+
+docker {
+    registryCredentials {
+        username = project.hasProperty('dockerUser') ? dockerUser : System.getenv('dockerUser')
+        password = project.hasProperty('dockerPassword') ? dockerPassword : System.getenv('dockerPassword')
+    }
+
+    springBootApplication {
+        baseImage = 'frolvlad/alpine-oraclejdk8:slim'
+        tag = "mshatunov/${rootProject.name}:${version}"
+    }
+}
+
+wrapper {
+    gradleVersion = '5.0'
 }
